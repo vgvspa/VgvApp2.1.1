@@ -498,31 +498,32 @@ html, body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-.login-logo {
+..login-logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.8rem;
 }
 
 .logo-vgv {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 12px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.25);
   background: white;
   padding: 6px;
+  margin-bottom: 10px;
 }
 
 .logo-text {
-  text-align: left;
+  text-align: center;
 }
 
 .logo-name {
   font-family: 'DM Sans', sans-serif;
   font-weight: 600;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   color: white;
   margin: 0;
 }
