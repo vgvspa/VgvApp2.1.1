@@ -248,11 +248,10 @@ async function submitEntrega() {
   status.classList.remove("hidden");
 
   try {
-    const res = await fetch("TU_URL_DE_APPS_SCRIPT", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
+const res = await fetch("https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec", {
+  method: "POST",
+  body: new URLSearchParams({ data: JSON.stringify(payload) })
+});
     const data = await res.json();
 
     if (data.ok) {
@@ -268,4 +267,8 @@ async function submitEntrega() {
 
   btn.disabled = false;
   btn.textContent = "Registrar entrega";
+}
+function nuevaEntrega() {
+  resetFormEntregas();
+  showScreen("screen-entregas");
 }
