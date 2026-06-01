@@ -13,37 +13,43 @@ async function doLogin() {
   const user = document.getElementById("login-user").value.trim();
   const pass = document.getElementById("login-pass").value.trim();
   const patente = document.getElementById("patente").value.trim();
+  const btn = document.querySelector(".btn-primary");
 
   if (!user || !pass || !patente) {
     document.getElementById("login-error").classList.remove("hidden");
     return;
   }
+ // 🔄 Animación de carga
+  btn.disabled = true;
+  btn.innerHTML = `
+    <span class="loader"></span> Espere...
+  `; 
 try {
-  const url = "https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec";
+    const url = "https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec";
+    const payload = { accion: "login", usuario: user, password: pass };
+    const res = await fetch(url, {
+      method: "POST",
+      body: new URLSearchParams({ data: JSON.stringify(payload) })
+    });
+    const data = await res.json();
 
-  const payload = {
-    accion: "login",
-    usuario: user,
-    password: pass
-  };
-  const res = await fetch(url, {
-    method: "POST",
-    body: new URLSearchParams({ data: JSON.stringify(payload) }) // ← clave
-  });
-  const data = await res.json();
-  if (data.ok) {
-    usuarioActivo = data.usuario; // ← usa el objeto completo
-    localStorage.setItem("patente", patente);
-    mostrarMenu();
-  } else {
-    document.getElementById("login-error").classList.remove("hidden");
+    if (data.ok) {
+      usuarioActivo = data.usuario;
+      localStorage.setItem("patente", patente);
+      mostrarMenu();
+    } else {
+      document.getElementById("login-error").classList.remove("hidden");
+    }
+
+  } catch (e) {
+    alert("Error de conexión con el servidor.");
+    console.error(e);
   }
 
-} catch (e) {
-  alert("Error de conexión con el servidor.");
-  console.error(e);
-  }
-} 
+  // 🔁 Restaurar botón
+  btn.disabled = false;
+  btn.textContent = "Ingresar";
+}
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
