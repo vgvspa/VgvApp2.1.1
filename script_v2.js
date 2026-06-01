@@ -25,7 +25,7 @@ async function doLogin() {
 
   try {
     // URL del Apps Script que expone la hoja "Usuarios"
-    const url = "14dsVF9EppWfPNUBwNssNh3Jvzi55VbvZam1d9dwynwM"; // ← reemplaza con tu endpoint real
+    const url = "https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec"; // ← reemplaza con tu endpoint real
 
     const payload = {
       accion: "login",
