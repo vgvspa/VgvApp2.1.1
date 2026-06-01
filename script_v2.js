@@ -227,17 +227,17 @@ async function submitEntrega() {
   }
 
   const payload = {
-    accion: "registrarEntrega",
-    guia,
-    estado,
-    tipoDocumento,
-    usuario: usuarioActivo.nombre,
-    rol: usuarioActivo.rol,
-    fecha: new Date().toLocaleDateString("es-CL"),
-    hora: new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }),
-    fotoBase64,
-    patente: localStorage.getItem("patente")
-  };
+  accion: "registrarEntrega",
+  numero: guia, // 
+  estado,
+  tipoDocumento,
+  usuario: usuarioActivo.nombre,
+  rol: usuarioActivo.rol,
+  fecha: new Date().toLocaleDateString("es-CL"),
+  hora: new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }),
+  fotoBase64,
+  patente: localStorage.getItem("patente")
+};
 
   const btn = document.getElementById("btn-submit");
   const status = document.getElementById("submit-status");
