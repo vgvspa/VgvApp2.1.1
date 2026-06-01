@@ -5,10 +5,6 @@ console.log("✅ script_v2.js cargado correctamente");
 
 let usuarioActivo = null;
 let fotoBase64 = null;
-
-// ============================================================
-// LOGIN
-// ============================================================
 // ============================================================
 // LOGIN CON GOOGLE SHEETS
 // ============================================================
@@ -39,14 +35,12 @@ async function doLogin() {
 });
 
     const data = await res.json();
+if (data.ok) {
+  usuarioActivo = data.usuario; //
+  localStorage.setItem("patente", patente);
+  mostrarMenu();
+}
 
-    if (data.ok) {
-      usuarioActivo = {
-        nombre: data.nombre,
-        rol: data.rol
-      };
-      localStorage.setItem("patente", patente);
-      mostrarMenu();
     } else {
       document.getElementById("login-error").classList.remove("hidden");
     }
