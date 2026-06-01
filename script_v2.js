@@ -299,3 +299,4 @@ function doLogout() {
   // Retorna al login
   showScreen("screen-login");
 }
+
