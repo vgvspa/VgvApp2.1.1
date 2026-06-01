@@ -18,39 +18,31 @@ async function doLogin() {
     document.getElementById("login-error").classList.remove("hidden");
     return;
   }
+try {
+  const url = "https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec";
 
-  try {
-    // URL del Apps Script que expone la hoja "Usuarios"
-    const url = "https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec"; // ← reemplaza con tu endpoint real
-
-    const payload = {
-      accion: "login",
-      usuario: user,
-      password: pass
-    };
-
-    const res = await fetch(url, {
-  method: "POST",
-  body: new URLSearchParams({ data: JSON.stringify(payload) })
-});
-
-    const data = await res.json();
-if (data.ok) {
-  usuarioActivo = data.usuario; //
-  localStorage.setItem("patente", patente);
-  mostrarMenu();
-}
-
-    } else {
-      document.getElementById("login-error").classList.remove("hidden");
-    }
-
-  } catch (e) {
-    alert("Error de conexión con el servidor.");
-    console.error(e);
+  const payload = {
+    accion: "login",
+    usuario: user,
+    password: pass
+  };
+  const res = await fetch(url, {
+    method: "POST",
+    body: new URLSearchParams({ data: JSON.stringify(payload) }) // ← clave
+  });
+  const data = await res.json();
+  if (data.ok) {
+    usuarioActivo = data.usuario; // ← usa el objeto completo
+    localStorage.setItem("patente", patente);
+    mostrarMenu();
+  } else {
+    document.getElementById("login-error").classList.remove("hidden");
   }
-}
 
+} catch (e) {
+  alert("Error de conexión con el servidor.");
+  console.error(e);
+}
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
