@@ -272,3 +272,8 @@ function nuevaEntrega() {
   resetFormEntregas();
   showScreen("screen-entregas");
 }
+function doLogout() {
+  usuarioActivo = null;
+  localStorage.removeItem("patente");
+  showScreen("screen-login");
+}
