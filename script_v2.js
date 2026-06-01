@@ -1,193 +1,264 @@
 // ============================================================
-// VGV SpA — Google Apps Script (Code.gs) FINAL SIMPLIFICADO
+// VARIABLES GLOBALES
 // ============================================================
 
-const SPREADSHEET_ID    = "1UDwJH8CtZUDufUI5rI9Gv7VeC9pvI62RXBJhw_8BK_0";
-const SHEET_LOGIN_ID    = "14dsVF9EppWfPNUBwNssNh3Jvzi55VbvZam1d9dwynwM";
-const HOJA_ENTREGAS     = "Entregas";
-const FOLDER_FOTOS_NAME = "VGV_Fotos_Entregas";
+let usuarioActivo = null;
+let fotoBase64 = null;
 
 // ============================================================
-// ENTRYPOINT
+// LOGIN
 // ============================================================
-function doPost(e) {
-  const output = ContentService.createTextOutput();
-  output.setMimeType(ContentService.MimeType.JSON);
 
-  try {
-    // El frontend envía URLSearchParams → leer con e.parameter.data
-    const data   = JSON.parse(e.parameter.data);
-    const accion = data.accion;
+function doLogin() {
+  const user = document.getElementById("login-user").value.trim();
+  const pass = document.getElementById("login-pass").value.trim();
+  const patente = document.getElementById("patente").value.trim();
 
-    let respuesta = {};
+  if (!user || !pass || !patente) {
+    document.getElementById("login-error").classList.remove("hidden");
+    return;
+  }
 
-    if (accion === "login")            respuesta = login(data);
-    if (accion === "registrarEntrega") respuesta = registrarEntrega(data);
+  // Simulación de usuarios
+  const usuarios = {
+    "juan.rodriguez": { nombre: "Juan Rodríguez", rol: "Repartidor" },
+    "nicolas.alvarez": { nombre: "Nicolás Álvarez", rol: "Repartidor" },
+    "admin": { nombre: "Administrador", rol: "Admin" }
+  };
 
-    return output.setContent(JSON.stringify(respuesta));
+  if (!usuarios[user] || pass !== "1234") {
+    document.getElementById("login-error").classList.remove("hidden");
+    return;
+  }
 
-  } catch (err) {
-    return output.setContent(JSON.stringify({ ok: false, error: err.message }));
+  usuarioActivo = usuarios[user];
+  localStorage.setItem("patente", patente);
+
+  mostrarMenu();
+}
+
+// ============================================================
+// NAVEGACIÓN
+// ============================================================
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0, 0);
+}
+
+function mostrarMenu() {
+  if (!usuarioActivo) return;
+
+  const iniciales = usuarioActivo.nombre
+    .split(" ")
+    .map(p => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  document.getElementById("menu-avatar").textContent = iniciales;
+  document.getElementById("menu-nombre").textContent = usuarioActivo.nombre;
+  document.getElementById("menu-rol").textContent = usuarioActivo.rol;
+
+  const ahora = new Date();
+  document.getElementById("menu-fecha").innerHTML =
+    `${ahora.toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short" })}<br>${ahora.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}`;
+
+  showScreen("screen-menu");
+}
+
+function goToModule(mod) {
+  if (mod === "entregas") {
+    resetFormEntregas();
+    showScreen("screen-entregas");
+    activarSeleccionEstado();
+  }
+}
+
+function goBack(destino) {
+  if (destino === "menu") {
+    mostrarMenu();
+  } else {
+    showScreen("screen-" + destino);
   }
 }
 
 // ============================================================
-// doGet — útil para probar que el backend está vivo
+// ESTADO DE ENTREGA
 // ============================================================
-function doGet(e) {
-  return ContentService
-    .createTextOutput("OK — VGV Backend activo")
-    .setMimeType(ContentService.MimeType.TEXT);
+
+function activarSeleccionEstado() {
+  document.querySelectorAll(".estado-box").forEach(box => {
+    box.onclick = () => {
+      document.querySelectorAll(".estado-box")
+        .forEach(b => b.classList.remove("selected"));
+
+      box.classList.add("selected");
+      document.getElementById("estado").value = box.dataset.value;
+    };
+  });
 }
 
 // ============================================================
-// LOGIN — basado en tu hoja real:
-// A=usuario | B=clave | C=nombre | D=rol
+// FORMULARIO ENTREGAS
 // ============================================================
-function login(data) {
-  const usuario  = (data.usuario  || "").trim().toLowerCase();
-  const password = (data.password || "").trim();
 
-  const ss   = SpreadsheetApp.openById(SHEET_LOGIN_ID);
-  const hoja = ss.getSheets()[0];
-  const rows = hoja.getDataRange().getValues();
+function resetFormEntregas() {
+  fotoBase64 = null;
 
-  for (var i = 1; i < rows.length; i++) {
-    var row    = rows[i];
-    var user   = (row[0] || "").toString().trim().toLowerCase();
-    var pass   = (row[1] || "").toString().trim();
-    var nombre = (row[2] || "").toString().trim();
-    var rol    = (row[3] || "").toString().trim();
+  document.getElementById("guia-numero").value = "";
+  document.getElementById("estado").value = "";
+  document.getElementById("tipoDocumento").value = "";
 
-    if (user === usuario && pass === password) {
-      logAccion("login", { usuario: usuario });
-      return { ok: true, usuario: { nombre: nombre, rol: rol } };
+  document.querySelectorAll(".estado-box").forEach(b => b.classList.remove("selected"));
+
+  document.getElementById("photo-preview").src = "";
+  document.getElementById("photo-preview").classList.add("hidden");
+  document.getElementById("photo-placeholder").style.display = "flex";
+  document.getElementById("btn-retake").style.display = "none";
+  document.getElementById("camera-input").value = "";
+  document.getElementById("submit-status").classList.add("hidden");
+  document.getElementById("btn-submit").disabled = false;
+
+  actualizarDatetime();
+}
+
+function actualizarDatetime() {
+  const ahora = new Date();
+  const texto = ahora.toLocaleDateString("es-CL", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  }) + " · " + ahora.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+
+  const el = document.getElementById("datetime-auto");
+  if (el) el.textContent = texto;
+}
+
+setInterval(() => {
+  if (document.getElementById("screen-entregas").classList.contains("active")) {
+    actualizarDatetime();
+  }
+}, 30000);
+
+// ============================================================
+// FOTO
+// ============================================================
+
+function triggerCamera() {
+  document.getElementById("camera-input").click();
+}
+
+function handlePhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    fotoBase64 = e.target.result;
+
+    const preview = document.getElementById("photo-preview");
+    preview.src = fotoBase64;
+    preview.classList.remove("hidden");
+
+    document.getElementById("photo-placeholder").style.display = "none";
+    document.getElementById("btn-retake").style.display = "block";
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function retakePhoto() {
+  fotoBase64 = null;
+  document.getElementById("camera-input").value = "";
+  document.getElementById("photo-preview").classList.add("hidden");
+  document.getElementById("photo-placeholder").style.display = "flex";
+  document.getElementById("btn-retake").style.display = "none";
+}
+
+// ============================================================
+// TIPO DE DOCUMENTO
+// ============================================================
+
+function seleccionarTipo(tipo) {
+  document.getElementById("tipoDocumento").value = tipo;
+
+  document.querySelectorAll(".btn-tipo-doc").forEach(btn => {
+    btn.classList.remove("selected");
+  });
+
+  if (tipo === "guia") {
+    document.querySelector(".btn-tipo-doc.guia").classList.add("selected");
+  } else {
+    document.querySelector(".btn-tipo-doc.factura").classList.add("selected");
+  }
+}
+
+// ============================================================
+// ENVÍO DE ENTREGA
+// ============================================================
+
+async function submitEntrega() {
+  const guia = document.getElementById("guia-numero").value.trim();
+  const estado = document.getElementById("estado").value;
+  const tipoDocumento = document.getElementById("tipoDocumento").value;
+
+  if (!tipoDocumento) {
+    alert("Selecciona si es guía o factura.");
+    return;
+  }
+  if (!guia) {
+    alert("Ingresa el número de documento.");
+    return;
+  }
+  if (!fotoBase64) {
+    alert("Toma o sube la foto.");
+    return;
+  }
+  if (!estado) {
+    alert("Selecciona el estado de la entrega.");
+    return;
+  }
+
+  const payload = {
+    accion: "registrarEntrega",
+    guia,
+    estado,
+    tipoDocumento,
+    usuario: usuarioActivo.nombre,
+    rol: usuarioActivo.rol,
+    fecha: new Date().toLocaleDateString("es-CL"),
+    hora: new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }),
+    fotoBase64,
+    patente: localStorage.getItem("patente")
+  };
+
+  const btn = document.getElementById("btn-submit");
+  const status = document.getElementById("submit-status");
+
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
+  status.textContent = "⏳ Guardando...";
+  status.classList.remove("hidden");
+
+  try {
+    const res = await fetch("TU_URL_DE_APPS_SCRIPT", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      document.getElementById("exito-guia").textContent = guia;
+      showScreen("screen-exito");
+    } else {
+      alert("Error al guardar: " + data.error);
     }
+
+  } catch (e) {
+    alert("Error de conexión.");
   }
 
-  return { ok: false, error: "Usuario o contraseña incorrectos" };
+  btn.disabled = false;
+  btn.textContent = "Registrar entrega";
 }
-// ============================================================
-// REGISTRAR ENTREGA — guarda foto + datos en hoja Entregas
-// ============================================================
-function registrarEntrega(data) {
-  try {
-    var numero         = (data.numero         || "").trim();   // antes "guia"
-    var usuario        = (data.usuario        || "").trim();
-    var rol            = (data.rol            || "").trim();
-    var fecha          = (data.fecha          || "").trim();
-    var hora           = (data.hora           || "").trim();
-    var estado         = (data.estado         || "").trim();
-    var patente        = (data.patente        || "").trim();
-    var tipoDocumento  = (data.tipoDocumento  || "").trim();   // ← NUEVO
-    var foto64         = data.fotoBase64 || "";
-
-    if (!numero)  return { ok: false, error: "Falta el número del documento" };
-    if (!foto64)  return { ok: false, error: "Falta la foto" };
-
-    // Guardar foto en Drive
-    // Carpeta raíz de fotos
-      var rootFolder = getOrCreateFolderByName(FOLDER_FOTOS_NAME);
-
-    // Crear carpeta del día (YYYY-MM-DD)
-    var dailyFolder = getOrCreateDailyFolder(rootFolder, fecha);
-
-    // Guardar archivo dentro de la carpeta del día
-  var blob = base64ToBlob(
-  foto64,
-  "image/jpeg",
-  tipoDocumento + "_" + numero + "_" + Date.now() + ".jpg"
-);
-var file = dailyFolder.createFile(blob);
-
-
-    // Guardar registro en hoja Entregas
-    var ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
-    var hoja = ss.getSheetByName(HOJA_ENTREGAS);
-    if (!hoja) hoja = ss.insertSheet(HOJA_ENTREGAS);
-
-    // Crear encabezados si no existen
-    if (hoja.getLastRow() === 0) {
-      hoja.appendRow([
-        "Fecha",
-        "Hora",
-        "Usuario",
-        "Patente",
-        "Tipo documento",
-        "Número",
-        "Estado",
-        "Rol",
-        "Archivo"
-      ]);
-      hoja.getRange(1, 1, 1, 9).setFontWeight("bold");
-    }
-    // Registrar entrega EXACTAMENTE como tu estructura
-    hoja.appendRow([
-      fecha,          // Fecha
-      hora,           // Hora
-      usuario,        // Usuario
-      patente,        // Patente
-      tipoDocumento,  // Tipo documento
-      numero,         // Número
-      estado,         // Estado
-      rol,            // Rol
-      file.getUrl()   // Archivo
-    ]);
-
-    logAccion("entrega", { numero: numero, usuario: usuario });
-
-    return { ok: true, url: file.getUrl() };
-
-  } catch (err) {
-    logError(err, "registrarEntrega");
-    return { ok: false, error: err.message };
-  }
-}
-// ============================================================
-// UTILIDADES
-// ============================================================
-function getOrCreateFolderByName(name) {
-  var it = DriveApp.getFoldersByName(name);
-  return it.hasNext() ? it.next() : DriveApp.createFolder(name);
-}
-
-function base64ToBlob(base64, contentType, filename) {
-  var parts = base64.split(",");
-  var data  = parts.length > 1 ? parts[1] : parts[0];
-  var bytes = Utilities.base64Decode(data);
-  return Utilities.newBlob(bytes, contentType, filename);
-}
-function getOrCreateDailyFolder(parentFolder, fecha) {
-  const nombreCarpeta = fecha; // Ej: "2026-06-01"
-
-  // Buscar si ya existe
-  const subFolders = parentFolder.getFoldersByName(nombreCarpeta);
-  if (subFolders.hasNext()) {
-    return subFolders.next();
-  }
-
-  // Si no existe → crear
-  return parentFolder.createFolder(nombreCarpeta);
-}
-
-// ============================================================
-// AUDITORÍA
-// ============================================================
-function logAccion(tipo, detalle) {
-  try {
-    var ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
-    var hoja = ss.getSheetByName("LOGS");
-    if (!hoja) hoja = ss.insertSheet("LOGS");
-    hoja.appendRow([new Date(), tipo, JSON.stringify(detalle)]);
-  } catch(e) {}
-}
-
-function logError(error, contexto) {
-  try {
-    var ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
-    var hoja = ss.getSheetByName("ERRORES");
-    if (!hoja) hoja = ss.insertSheet("ERRORES");
-    hoja.appendRow([new Date(), contexto, error.toString()]);
-  } catch(e) {}
-}
-SpreadsheetApp.flush();
