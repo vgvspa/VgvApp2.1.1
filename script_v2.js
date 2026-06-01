@@ -25,12 +25,12 @@ async function doLogin() {
 
   try {
     // URL del Apps Script que expone la hoja "Usuarios"
-    const url = "TU_URL_DE_APPS_SCRIPT"; // ← reemplaza con tu endpoint real
+    const url = "14dsVF9EppWfPNUBwNssNh3Jvzi55VbvZam1d9dwynwM"; // ← reemplaza con tu endpoint real
 
     const payload = {
       accion: "login",
       usuario: user,
-      clave: pass
+      password: pass
     };
 
     const res = await fetch(url, {
