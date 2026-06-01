@@ -34,9 +34,9 @@ async function doLogin() {
     };
 
     const res = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+  method: "POST",
+  body: new URLSearchParams({ data: JSON.stringify(payload) })
+});
 
     const data = await res.json();
 
