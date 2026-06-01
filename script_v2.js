@@ -9,8 +9,11 @@ let fotoBase64 = null;
 // ============================================================
 // LOGIN
 // ============================================================
+// ============================================================
+// LOGIN CON GOOGLE SHEETS
+// ============================================================
 
-function doLogin() {
+async function doLogin() {
   const user = document.getElementById("login-user").value.trim();
   const pass = document.getElementById("login-pass").value.trim();
   const patente = document.getElementById("patente").value.trim();
@@ -20,22 +23,38 @@ function doLogin() {
     return;
   }
 
-  // Simulación de usuarios
-  const usuarios = {
-    "juan.rodriguez": { nombre: "Juan Rodríguez", rol: "Repartidor" },
-    "nicolas.alvarez": { nombre: "Nicolás Álvarez", rol: "Repartidor" },
-    "admin": { nombre: "Administrador", rol: "Admin" }
-  };
+  try {
+    // URL del Apps Script que expone la hoja "Usuarios"
+    const url = "TU_URL_DE_APPS_SCRIPT"; // ← reemplaza con tu endpoint real
 
-  if (!usuarios[user] || pass !== "1234") {
-    document.getElementById("login-error").classList.remove("hidden");
-    return;
+    const payload = {
+      accion: "login",
+      usuario: user,
+      clave: pass
+    };
+
+    const res = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      usuarioActivo = {
+        nombre: data.nombre,
+        rol: data.rol
+      };
+      localStorage.setItem("patente", patente);
+      mostrarMenu();
+    } else {
+      document.getElementById("login-error").classList.remove("hidden");
+    }
+
+  } catch (e) {
+    alert("Error de conexión con el servidor.");
+    console.error(e);
   }
-
-  usuarioActivo = usuarios[user];
-  localStorage.setItem("patente", patente);
-
-  mostrarMenu();
 }
 
 // ============================================================
