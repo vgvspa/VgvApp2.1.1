@@ -1,6 +1,7 @@
 // ============================================================
 // VARIABLES GLOBALES
 // ============================================================
+console.log("✅ script_v2.js cargado correctamente");
 
 let usuarioActivo = null;
 let fotoBase64 = null;
