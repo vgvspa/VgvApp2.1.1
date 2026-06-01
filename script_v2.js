@@ -273,7 +273,29 @@ function nuevaEntrega() {
   showScreen("screen-entregas");
 }
 function doLogout() {
+  // Limpia datos del usuario
   usuarioActivo = null;
   localStorage.removeItem("patente");
+
+  // Muestra mensaje visual
+  const mensaje = document.createElement("div");
+  mensaje.textContent = "✅ Sesión cerrada correctamente";
+  mensaje.style.position = "fixed";
+  mensaje.style.bottom = "20px";
+  mensaje.style.left = "50%";
+  mensaje.style.transform = "translateX(-50%)";
+  mensaje.style.background = "#0d47a1";
+  mensaje.style.color = "white";
+  mensaje.style.padding = "10px 20px";
+  mensaje.style.borderRadius = "6px";
+  mensaje.style.fontWeight = "500";
+  mensaje.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+  mensaje.style.zIndex = "9999";
+  document.body.appendChild(mensaje);
+
+  // Oculta el mensaje después de 2 segundos
+  setTimeout(() => mensaje.remove(), 2000);
+
+  // Retorna al login
   showScreen("screen-login");
 }
