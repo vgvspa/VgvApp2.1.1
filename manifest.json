@@ -1,11 +1,11 @@
 {
-  "name": "VGV Entregas",
+  "name": "VGV",
   "short_name": "VGV App",
   "start_url": "/vgvspa/VgvApp2.1.1/",
   "scope": "/vgvspa/VgvApp2.1.1/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0d47a1",
+  "theme_color": "#003366",
   "icons": [
     {
       "src": "icon-192.png",
