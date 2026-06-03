@@ -1,8 +1,8 @@
 {
   "name": "VGV",
   "short_name": "VGV App",
-  "start_url": "/vgvspa/VgvApp2.1.1/",
-  "scope": "/vgvspa/VgvApp2.1.1/",
+  "start_url": "/VgvApp2.1.1/",
+  "scope": "/VgvApp2.1.1/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#003366",
