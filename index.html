@@ -12,8 +12,9 @@
   <link rel="manifest" href="/VgvApp2.1.1/manifest.json">
 <script>
   if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/VgvApp2.1.1/service-worker.js");
-}
+ navigator.serviceWorker.register("/VgvApp2.1.1/service-worker.js", {
+  scope: "/VgvApp2.1.1/"
+});
 </script>
 
 </head>
@@ -27,8 +28,7 @@
     <div class="login-card">
       
     <div class="login-logo">
-  <img src="icon-512.png" alt="Logo VGV SpA" class="logo-vgv" />
-  <div class="logo-text">
+   <div class="logo-text">
     <h1 class="logo-name">VGV SpA</h1>
     <p class="logo-sub">Portal de Operaciones</p>
   </div>
