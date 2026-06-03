@@ -1,10 +1,10 @@
 const CACHE_NAME = "vgv-cache-v1";
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/icon-192.png",
-  "/icon-512.png"
+  "/VgvApp2.1.1/",
+  "/VgvApp2.1.1/index.html",
+  "/VgvApp2.1.1/manifest.json",
+  "/VgvApp2.1.1/icon-192.png",
+  "/VgvApp2.1.1/icon-512.png"
 ];
 
 // Instalar SW
@@ -38,3 +38,4 @@ self.addEventListener("fetch", event => {
     caches.match(req).then(resp => resp || fetch(req))
   );
 });
+
