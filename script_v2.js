@@ -158,15 +158,31 @@ setInterval(() => {
 // ============================================================
 
 function triggerCamera() {
+  document.getElementById("photo-overlay").classList.remove("hidden");
   document.getElementById("camera-input").click();
 }
 
-function handlePhoto(event) {
+async function handlePhoto(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  // Validación de calidad
+  const resultado = await validarFoto(file);
+
+  if (!resultado.ok) {
+    alert(resultado.motivo);
+
+    // Ocultar overlay si la foto es inválida
+    document.getElementById("photo-overlay").classList.add("hidden");
+    return;
+  }
+
+  // Ocultar overlay al aceptar foto
+  document.getElementById("photo-overlay").classList.add("hidden");
+
+  // Mostrar preview
   const reader = new FileReader();
-  reader.onload = async e => {
+  reader.onload = e => {
     fotoBase64 = e.target.result;
 
     const preview = document.getElementById("photo-preview");
@@ -187,6 +203,7 @@ function retakePhoto() {
   document.getElementById("photo-placeholder").style.display = "flex";
   document.getElementById("btn-retake").style.display = "none";
 }
+
 
 // ============================================================
 // TIPO DE DOCUMENTO
