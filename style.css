@@ -543,27 +543,26 @@ html, body {
   height: 100%;
   pointer-events: none;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 40px; /* margen interno para que no quede pegado a los bordes */
+  box-sizing: border-box;
 }
 
 .overlay-frame {
   width: 80%;
-  height: 60%;
-  border: 3px dashed rgba(255, 255, 255, 0.8);
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  height: 55%;
+  border: 3px dashed rgba(255, 255, 255, 0.85);
+  border-radius: 14px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px); /* efecto pro */
 }
 
 .overlay-text {
-  margin-top: 12px;
+  position: absolute;
+  bottom: 30px;
   color: white;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   text-shadow: 0 0 4px black;
-}
-
-.hidden {
-  display: none !important;
 }
