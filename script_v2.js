@@ -178,22 +178,32 @@ async function handlePhoto(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  // 1) Validar calidad
   const resultado = await validarFoto(file);
+
   if (!resultado.ok) {
     alert(resultado.motivo);
     document.getElementById("photo-overlay").classList.add("hidden");
     return;
   }
 
+  // 2) Marco verde (solo si la foto es válida)
+  const frame = document.getElementById("overlay-frame");
+  frame.classList.add("ok");
+  setTimeout(() => frame.classList.remove("ok"), 1000);
+
+  // 3) Ocultar overlay
   document.getElementById("photo-overlay").classList.add("hidden");
 
   try {
-    // ✅ Comprimir y asignar en un solo paso (elimina el FileReader duplicado)
+    // 4) Comprimir imagen
     fotoBase64 = await comprimirImagen(file);
 
+    // 5) Mostrar preview
     const preview = document.getElementById("photo-preview");
     preview.src = fotoBase64;
     preview.classList.remove("hidden");
+
     document.getElementById("photo-placeholder").style.display = "none";
     document.getElementById("btn-retake").style.display = "block";
 
@@ -211,7 +221,6 @@ function retakePhoto() {
   document.getElementById("photo-placeholder").style.display = "flex";
   document.getElementById("btn-retake").style.display = "none";
 }
-
 // ============================================================
 // COMPRESIÓN DE IMAGEN
 // ============================================================
