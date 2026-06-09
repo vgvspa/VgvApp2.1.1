@@ -557,10 +557,36 @@ html, body {
   box-sizing: border-box;
 }
 
+/* Marco normal */
 .overlay-frame {
   width: 85%;
   height: 70%;
   border: 3px dashed rgba(255, 255, 255, 0.85);
   border-radius: 12px;
+  position: relative;
+  z-index: 2;
+  transition: border-color .3s, box-shadow .3s;
 }
 
+/* Marco verde cuando la foto es válida */
+.overlay-frame.ok {
+  border-color: #00ff00;
+  box-shadow: 0 0 12px rgba(0,255,0,0.8);
+}
+.scan-line {
+  position: absolute;
+  top: 10%;
+  width: 80%;
+  height: 3px;
+  background: rgba(0, 255, 0, 0.9);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(0,255,0,0.9);
+  animation: scanMove 2.2s linear infinite;
+  z-index: 3;
+}
+
+@keyframes scanMove {
+  0%   { transform: translateY(0); opacity: 1; }
+  50%  { opacity: 0.6; }
+  100% { transform: translateY(250px); opacity: 1; }
+}
