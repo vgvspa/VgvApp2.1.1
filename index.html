@@ -5,19 +5,22 @@
   <meta name="theme-color" content="#0d47a1">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>VGV SpA — Portal Operaciones</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/VgvApp2.1.1/style.css">
-<link rel="manifest" href="/VgvApp2.1.1/manifest.json">
 
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/service-worker.js", {
-     scope: "/VgvApp2.1.1/"
-    });
-  }
-</script>
+  <link rel="stylesheet" href="/VgvApp2.1.1/style.css">
+  <link rel="manifest" href="/VgvApp2.1.1/manifest.json">
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/VgvApp2.1.1/service-worker.js", {
+        scope: "/VgvApp2.1.1/"
+      });
+    }
+  </script>
 </head>
+
 <body>
 
   <!-- ===================== PANTALLA: LOGIN ===================== -->
