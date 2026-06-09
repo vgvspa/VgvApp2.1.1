@@ -120,23 +120,35 @@ function activarSeleccionEstado() {
 function resetFormEntregas() {
   fotoBase64 = null;
 
+  // Campos del formulario
   document.getElementById("guia-numero").value = "";
   document.getElementById("estado").value = "";
   document.getElementById("tipoDocumento").value = "";
 
+  // Reset estado visual
   document.querySelectorAll(".estado-box").forEach(b => b.classList.remove("selected"));
 
+  // Reset tipo de documento
+  document.querySelectorAll(".btn-tipo-doc").forEach(btn => btn.classList.remove("selected"));
+
+  // Reset foto
   document.getElementById("photo-preview").src = "";
   document.getElementById("photo-preview").classList.add("hidden");
   document.getElementById("photo-placeholder").style.display = "flex";
   document.getElementById("btn-retake").style.display = "none";
   document.getElementById("camera-input").value = "";
+
+  // Ocultar overlay si quedó visible
+  const overlay = document.getElementById("photo-overlay");
+  if (overlay) overlay.classList.add("hidden");
+
+  // Reset estado del botón de envío
   document.getElementById("submit-status").classList.add("hidden");
   document.getElementById("btn-submit").disabled = false;
 
+  // Actualizar fecha/hora
   actualizarDatetime();
 }
-
 function actualizarDatetime() {
   const ahora = new Date();
   const texto = ahora.toLocaleDateString("es-CL", {
