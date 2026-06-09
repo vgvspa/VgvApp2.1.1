@@ -178,45 +178,74 @@ async function handlePhoto(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Validación de calidad
   const resultado = await validarFoto(file);
-
   if (!resultado.ok) {
     alert(resultado.motivo);
-
-    // Ocultar overlay si la foto es inválida
     document.getElementById("photo-overlay").classList.add("hidden");
     return;
   }
 
-  // Ocultar overlay al aceptar foto
   document.getElementById("photo-overlay").classList.add("hidden");
 
-  // Mostrar preview
-  const reader = new FileReader();
-  reader.onload = e => {
-    fotoBase64 = e.target.result;
+  try {
+    // ✅ Comprimir y asignar en un solo paso (elimina el FileReader duplicado)
+    fotoBase64 = await comprimirImagen(file);
 
     const preview = document.getElementById("photo-preview");
     preview.src = fotoBase64;
     preview.classList.remove("hidden");
-
     document.getElementById("photo-placeholder").style.display = "none";
     document.getElementById("btn-retake").style.display = "block";
-  };
 
-  reader.readAsDataURL(file);
+  } catch (e) {
+    alert("Error al procesar la imagen. Intenta nuevamente.");
+    console.error("comprimirImagen falló:", e);
+  }
 }
 
 function retakePhoto() {
   fotoBase64 = null;
   document.getElementById("camera-input").value = "";
+  document.getElementById("photo-preview").src = "";
   document.getElementById("photo-preview").classList.add("hidden");
   document.getElementById("photo-placeholder").style.display = "flex";
   document.getElementById("btn-retake").style.display = "none";
 }
 
+// ============================================================
+// COMPRESIÓN DE IMAGEN
+// ============================================================
 
+function comprimirImagen(file, maxWidth = 1024, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file); // ✅ Evita doble FileReader
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl); // ✅ Libera memoria inmediatamente
+
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl); // ✅ Libera memoria también en error
+      reject(new Error("No se pudo cargar la imagen"));
+    };
+
+    img.src = objectUrl;
+  });
+}
 // ============================================================
 // TIPO DE DOCUMENTO
 // ============================================================
