@@ -1,21 +1,29 @@
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
 const CACHE_NAME = "vgv-cache-v3";
 
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/style.css",
-  "/script_v2.js",
-  "/manifest.json",
-  "/icon-192.png",
-  "/icon-512.png"
+  "/VgvApp2.1.1/",
+  "/VgvApp2.1.1/index.html",
+  "/VgvApp2.1.1/style.css",
+  "/VgvApp2.1.1/script_v2.js",
+  "/VgvApp2.1.1/manifest.json",
+  "/VgvApp2.1.1/icon-192.png",
+  "/VgvApp2.1.1/icon-512.png"
 ];
 
+// ============================================================
+// INSTALL — Cachea archivos
+// ============================================================
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return Promise.allSettled(
         urlsToCache.map(url =>
-          cache.add(url).catch(err => console.warn("No se pudo cachear:", url, err))
+          cache.add(url).catch(err =>
+            console.warn("No se pudo cachear:", url, err)
+          )
         )
       );
     })
@@ -23,6 +31,9 @@ self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
+// ============================================================
+// ACTIVATE — Limpia cachés viejos
+// ============================================================
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -32,14 +43,19 @@ self.addEventListener("activate", event => {
   self.clients.claim();
 });
 
+// ============================================================
+// FETCH — Cache-first
+// ============================================================
 self.addEventListener("fetch", event => {
   const req = event.request;
 
+  // No interceptar POST
   if (req.method !== "GET") return;
+
+  // No interceptar Apps Script
   if (req.url.includes("script.google.com/macros")) return;
 
   event.respondWith(
     caches.match(req).then(resp => resp || fetch(req))
   );
 });
-
