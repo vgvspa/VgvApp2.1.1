@@ -317,19 +317,18 @@ html, body {
 
 /* ========== FORMULARIO ENTREGAS ========== */
 .photo-area {
-  position: relative; 
+  position: relative;
+  width: 100%;
+  height: 220px;
   border: 2px dashed var(--borde);
   border-radius: var(--radio);
-  height: 220px; /* altura fija para evitar que empuje el formulario */
   display: flex;
   align-items: center;
   justify-content: center;
   background: white;
   cursor: pointer;
   overflow: hidden;
-  transition: border-color .2s;
 }
-
 #photo-preview {
   max-width: 100%;
   max-height: 250px; /* controla el alto visible */
