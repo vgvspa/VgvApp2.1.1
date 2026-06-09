@@ -545,7 +545,7 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px; /* margen interno para que no quede pegado a los bordes */
+  padding: 60px; /* margen interno para que no quede pegado a los bordes */
   box-sizing: border-box;
 }
 
