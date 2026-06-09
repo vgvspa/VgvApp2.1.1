@@ -548,29 +548,19 @@ html, body {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100%; /* coincide con .photo-area */
   pointer-events: none;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 60px; /* margen interno para que no quede pegado a los bordes */
+  padding: 20px;
   box-sizing: border-box;
 }
 
 .overlay-frame {
-  width: 80%;
-  height: 55%;
+  width: 85%;
+  height: 70%;
   border: 3px dashed rgba(255, 255, 255, 0.85);
-  border-radius: 14px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.45);
-  backdrop-filter: blur(2px); /* efecto pro */
+  border-radius: 12px;
 }
 
-.overlay-text {
-  position: absolute;
-  bottom: 30px;
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  text-shadow: 0 0 4px black;
-}
