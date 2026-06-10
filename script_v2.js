@@ -194,79 +194,89 @@ function retakePhoto() {
   document.getElementById("photo-placeholder").style.display = "flex";
   document.getElementById("btn-retake").style.display = "none";
 }
-
 // ============================================================
-// COMPRESIÓN DE IMAGEN
+// COMPRESIÓN DE IMAGEN (VERSIÓN SIMPLE Y ESTABLE)
 // ============================================================
 function comprimirImagen(file, maxWidth = 1024, quality = 0.75) {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
-
     const objectUrl = URL.createObjectURL(file);
 
-    img.onload = async () => {
+    img.onload = () => {
       try {
-        // FIX 1: asegurar decodificación completa (iPhone/Android)
-        if (img.decode) {
-          await img.decode();
-        }
-
         URL.revokeObjectURL(objectUrl);
 
         let { width, height } = img;
 
-        // FIX 2: respetar orientación EXIF (muy importante)
-        const orientation = await leerOrientacionEXIF(file);
-
-        // Redimensionar
+        // Redimensionar manteniendo proporción
         if (width > maxWidth) {
           height = Math.round((height * maxWidth) / width);
           width = maxWidth;
         }
 
         const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
         const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
 
-        // Ajustar canvas según orientación
-        if (orientation === 6 || orientation === 8) {
-          canvas.width = height;
-          canvas.height = width;
-        } else {
-          canvas.width = width;
-          canvas.height = height;
-        }
-
-        // Rotar según EXIF
-        switch (orientation) {
-          case 3:
-            ctx.rotate(Math.PI);
-            ctx.drawImage(img, -width, -height, width, height);
-            break;
-          case 6:
-            ctx.rotate(90 * Math.PI / 180);
-            ctx.drawImage(img, 0, -height, width, height);
-            break;
-          case 8:
-            ctx.rotate(-90 * Math.PI / 180);
-            ctx.drawImage(img, -width, 0, width, height);
-            break;
-          default:
-            ctx.drawImage(img, 0, 0, width, height);
-        }
         const base64 = canvas.toDataURL("image/jpeg", quality);
         resolve(base64);
+
       } catch (err) {
         reject(err);
       }
     };
+
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
       reject("No se pudo cargar la imagen");
     };
+
     img.src = objectUrl;
   });
 }
+
+// ============================================================
+// FOTO — FLUJO SIMPLE Y ESTABLE
+// ============================================================
+function triggerCamera() {
+  const input = document.getElementById("camera-input");
+  input.value = ""; // reset obligatorio para que dispare onchange
+  input.click();
+}
+
+async function handlePhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Comprimir imagen
+  fotoBase64 = await comprimirImagen(file);
+
+  // Mostrar preview
+  const preview = document.getElementById("photo-preview");
+  preview.src = fotoBase64;
+  preview.classList.remove("hidden");
+
+  // Ocultar placeholder
+  document.getElementById("photo-placeholder").style.display = "none";
+
+  // Mostrar botón "Tomar otra foto"
+  document.getElementById("btn-retake").style.display = "block";
+}
+
+function retakePhoto() {
+  fotoBase64 = null;
+
+  const preview = document.getElementById("photo-preview");
+  preview.src = "";
+  preview.classList.add("hidden");
+
+  document.getElementById("photo-placeholder").style.display = "flex";
+  document.getElementById("btn-retake").style.display = "none";
+}
+
 // ============================================================
 // TIPO DE DOCUMENTO
 // ============================================================
