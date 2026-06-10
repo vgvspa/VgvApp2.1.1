@@ -176,19 +176,11 @@
         </div>
       </div>
 
-     <!-- Foto -->
+    <!-- Foto -->
 <div class="field-section">
   <label class="form-label">Foto</label>
 
-  <!-- Overlay fuera del área clickeable -->
-  <div id="photo-overlay" class="photo-overlay hidden">
-    <div id="overlay-frame" class="overlay-frame"></div>
-    <span class="overlay-text">Alinee la guía dentro del recuadro</span>
-  </div>
-
-  <!-- Área clickeable -->
   <div class="photo-area" onclick="triggerCamera()">
-
     <img id="photo-preview" class="hidden" alt="Vista previa" />
 
     <div id="photo-placeholder">
@@ -198,8 +190,22 @@
       </svg>
       <span>Tomar foto o subir imagen</span>
     </div>
-
   </div>
+
+  <input 
+    type="file" 
+    id="camera-input" 
+    accept="image/*" 
+    capture="environment" 
+    class="hidden"
+    onchange="handlePhoto(event)"
+  />
+
+  <button class="btn-secondary" id="btn-retake" onclick="retakePhoto()" style="display:none; margin-top:6px;">
+    Tomar otra foto
+  </button>
+</div>
+
 
   <!-- Input real -->
   <input 
