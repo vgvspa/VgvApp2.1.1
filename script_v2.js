@@ -127,8 +127,6 @@ function resetFormEntregas() {
 
   // Reset estado visual
   document.querySelectorAll(".estado-box").forEach(b => b.classList.remove("selected"));
-
-  // Reset tipo de documento
   document.querySelectorAll(".btn-tipo-doc").forEach(btn => btn.classList.remove("selected"));
 
   // Reset foto
@@ -138,10 +136,6 @@ function resetFormEntregas() {
   document.getElementById("btn-retake").style.display = "none";
   document.getElementById("camera-input").value = "";
 
-  // Ocultar overlay si quedó visible
-  const overlay = document.getElementById("photo-overlay");
-  if (overlay) overlay.classList.add("hidden");
-
   // Reset estado del botón de envío
   document.getElementById("submit-status").classList.add("hidden");
   document.getElementById("btn-submit").disabled = false;
@@ -149,6 +143,7 @@ function resetFormEntregas() {
   // Actualizar fecha/hora
   actualizarDatetime();
 }
+
 function actualizarDatetime() {
   const ahora = new Date();
   const texto = ahora.toLocaleDateString("es-CL", {
@@ -165,36 +160,18 @@ setInterval(() => {
   }
 }, 30000);
 
+// ============================================================
+// FOTO 
+// ============================================================
 function triggerCamera() {
-  // Mostrar overlay
-  document.getElementById("photo-overlay").classList.remove("hidden");
-
-  // Reset del input para que SIEMPRE dispare onchange
   const input = document.getElementById("camera-input");
-  input.value = "";
-
+  input.value = ""; // reset obligatorio
   input.click();
 }
 
 async function handlePhoto(event) {
   const file = event.target.files[0];
   if (!file) return;
-
-  // Validación
-  const resultado = await validarFoto(file);
-  if (!resultado.ok) {
-    alert(resultado.motivo);
-    document.getElementById("photo-overlay").classList.add("hidden");
-    return;
-  }
-
-  // Marco verde
-  const frame = document.getElementById("overlay-frame");
-  frame.classList.add("ok");
-  setTimeout(() => frame.classList.remove("ok"), 800);
-
-  // Ocultar overlay
-  document.getElementById("photo-overlay").classList.add("hidden");
 
   // Comprimir imagen
   fotoBase64 = await comprimirImagen(file);
@@ -218,7 +195,6 @@ function retakePhoto() {
   document.getElementById("photo-placeholder").style.display = "flex";
   document.getElementById("btn-retake").style.display = "none";
 }
-
 
 // ============================================================
 // COMPRESIÓN DE IMAGEN
