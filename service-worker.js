@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIGURACIÓN
 // ============================================================
-const CACHE_NAME = "vgv-cache-v3";
+const CACHE_NAME = "vgv-cache-v4";
 
 const urlsToCache = [
   "/VgvApp2.1.1/",
@@ -12,6 +12,8 @@ const urlsToCache = [
   "/VgvApp2.1.1/icon-192.png",
   "/VgvApp2.1.1/icon-512.png"
 ];
+self.skipWaiting();
+self.clientsClaim();
 
 // ============================================================
 // INSTALL — Cachea archivos
