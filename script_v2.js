@@ -170,7 +170,13 @@ setInterval(() => {
 // ============================================================
 
 function triggerCamera() {
-  document.getElementById("photo-overlay").classList.remove("hidden");
+  const overlay = document.getElementById("photo-overlay");
+  overlay.classList.remove("hidden");
+
+  // Limpia marco verde previo
+  const frame = document.getElementById("overlay-frame");
+  frame.classList.remove("ok");
+
   document.getElementById("camera-input").click();
 }
 
@@ -187,7 +193,7 @@ async function handlePhoto(event) {
     return;
   }
 
-  // 2) Marco verde (solo si la foto es válida)
+  // 2) Marco verde
   const frame = document.getElementById("overlay-frame");
   frame.classList.add("ok");
   setTimeout(() => frame.classList.remove("ok"), 1000);
@@ -196,7 +202,7 @@ async function handlePhoto(event) {
   document.getElementById("photo-overlay").classList.add("hidden");
 
   try {
-    // 4) Comprimir imagen
+    // 4) Comprimir imagen (fix: esperar a que cargue bien en móviles)
     fotoBase64 = await comprimirImagen(file);
 
     // 5) Mostrar preview
@@ -215,12 +221,18 @@ async function handlePhoto(event) {
 
 function retakePhoto() {
   fotoBase64 = null;
-  document.getElementById("camera-input").value = "";
-  document.getElementById("photo-preview").src = "";
-  document.getElementById("photo-preview").classList.add("hidden");
+
+  const input = document.getElementById("camera-input");
+  input.value = ""; // reset real
+
+  const preview = document.getElementById("photo-preview");
+  preview.src = "";
+  preview.classList.add("hidden");
+
   document.getElementById("photo-placeholder").style.display = "flex";
   document.getElementById("btn-retake").style.display = "none";
 }
+
 // ============================================================
 // COMPRESIÓN DE IMAGEN
 // ============================================================
@@ -228,12 +240,17 @@ function retakePhoto() {
 function comprimirImagen(file, maxWidth = 1024, quality = 0.75) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const objectUrl = URL.createObjectURL(file); // ✅ Evita doble FileReader
+
+    // FIX CRÍTICO: necesario para móviles (iPhone/Android)
+    img.crossOrigin = "anonymous";
+
+    const objectUrl = URL.createObjectURL(file);
 
     img.onload = () => {
-      URL.revokeObjectURL(objectUrl); // ✅ Libera memoria inmediatamente
+      URL.revokeObjectURL(objectUrl);
 
       let { width, height } = img;
+
       if (width > maxWidth) {
         height = Math.round((height * maxWidth) / width);
         width = maxWidth;
@@ -243,12 +260,19 @@ function comprimirImagen(file, maxWidth = 1024, quality = 0.75) {
       canvas.width = width;
       canvas.height = height;
 
-      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL("image/jpeg", quality));
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      try {
+        const base64 = canvas.toDataURL("image/jpeg", quality);
+        resolve(base64);
+      } catch (err) {
+        reject(err);
+      }
     };
 
     img.onerror = () => {
-      URL.revokeObjectURL(objectUrl); // ✅ Libera memoria también en error
+      URL.revokeObjectURL(objectUrl);
       reject(new Error("No se pudo cargar la imagen"));
     };
 
