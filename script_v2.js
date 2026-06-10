@@ -184,7 +184,6 @@ async function handlePhoto(event) {
   document.getElementById("photo-placeholder").style.display = "none";
   document.getElementById("btn-retake").style.display = "block";
 }
-
 function retakePhoto() {
   fotoBase64 = null;
 
