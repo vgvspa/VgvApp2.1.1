@@ -176,11 +176,12 @@
         </div>
       </div>
 
-    <!-- Foto -->
+ <!-- Foto -->
 <div class="field-section">
   <label class="form-label">Foto</label>
 
   <div class="photo-area" onclick="triggerCamera()">
+
     <img id="photo-preview" class="hidden" alt="Vista previa" />
 
     <div id="photo-placeholder">
@@ -190,6 +191,7 @@
       </svg>
       <span>Tomar foto o subir imagen</span>
     </div>
+
   </div>
 
   <input 
@@ -206,22 +208,6 @@
   </button>
 </div>
 
-
-  <!-- Input real -->
-  <input 
-    type="file" 
-    id="camera-input" 
-    accept="image/*" 
-    capture="environment" 
-    class="hidden"
-    onchange="handlePhoto(event)"
-  />
-
-  <!-- Botón retomar -->
-  <button class="btn-secondary" id="btn-retake" onclick="retakePhoto()" style="display:none; margin-top:6px;">
-    Tomar otra foto
-  </button>
-</div>
 
      <!-- Estado de la entrega -->  
             <div id="estado-opciones" class="estado-container">
