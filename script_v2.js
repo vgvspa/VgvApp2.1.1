@@ -165,65 +165,51 @@ setInterval(() => {
   }
 }, 30000);
 
-// ============================================================
-// FOTO
-// ============================================================
-
 function triggerCamera() {
-  const overlay = document.getElementById("photo-overlay");
-  overlay.classList.remove("hidden");
+  // Mostrar overlay
+  document.getElementById("photo-overlay").classList.remove("hidden");
 
-  // Limpia marco verde previo
-  const frame = document.getElementById("overlay-frame");
-  frame.classList.remove("ok");
+  // Reset del input para que SIEMPRE dispare onchange
+  const input = document.getElementById("camera-input");
+  input.value = "";
 
-  document.getElementById("camera-input").click();
+  input.click();
 }
 
 async function handlePhoto(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  // 1) Validar calidad
+  // Validación
   const resultado = await validarFoto(file);
-
   if (!resultado.ok) {
     alert(resultado.motivo);
     document.getElementById("photo-overlay").classList.add("hidden");
     return;
   }
 
-  // 2) Marco verde
+  // Marco verde
   const frame = document.getElementById("overlay-frame");
   frame.classList.add("ok");
-  setTimeout(() => frame.classList.remove("ok"), 1000);
+  setTimeout(() => frame.classList.remove("ok"), 800);
 
-  // 3) Ocultar overlay
+  // Ocultar overlay
   document.getElementById("photo-overlay").classList.add("hidden");
 
-  try {
-    // 4) Comprimir imagen (fix: esperar a que cargue bien en móviles)
-    fotoBase64 = await comprimirImagen(file);
+  // Comprimir imagen
+  fotoBase64 = await comprimirImagen(file);
 
-    // 5) Mostrar preview
-    const preview = document.getElementById("photo-preview");
-    preview.src = fotoBase64;
-    preview.classList.remove("hidden");
+  // Mostrar preview
+  const preview = document.getElementById("photo-preview");
+  preview.src = fotoBase64;
+  preview.classList.remove("hidden");
 
-    document.getElementById("photo-placeholder").style.display = "none";
-    document.getElementById("btn-retake").style.display = "block";
-
-  } catch (e) {
-    alert("Error al procesar la imagen. Intenta nuevamente.");
-    console.error("comprimirImagen falló:", e);
-  }
+  document.getElementById("photo-placeholder").style.display = "none";
+  document.getElementById("btn-retake").style.display = "block";
 }
 
 function retakePhoto() {
   fotoBase64 = null;
-
-  const input = document.getElementById("camera-input");
-  input.value = ""; // reset real
 
   const preview = document.getElementById("photo-preview");
   preview.src = "";
@@ -233,49 +219,76 @@ function retakePhoto() {
   document.getElementById("btn-retake").style.display = "none";
 }
 
+
 // ============================================================
 // COMPRESIÓN DE IMAGEN
 // ============================================================
-
 function comprimirImagen(file, maxWidth = 1024, quality = 0.75) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const img = new Image();
-
-    // FIX CRÍTICO: necesario para móviles (iPhone/Android)
     img.crossOrigin = "anonymous";
 
     const objectUrl = URL.createObjectURL(file);
 
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-
-      let { width, height } = img;
-
-      if (width > maxWidth) {
-        height = Math.round((height * maxWidth) / width);
-        width = maxWidth;
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-
+    img.onload = async () => {
       try {
+        // FIX 1: asegurar decodificación completa (iPhone/Android)
+        if (img.decode) {
+          await img.decode();
+        }
+
+        URL.revokeObjectURL(objectUrl);
+
+        let { width, height } = img;
+
+        // FIX 2: respetar orientación EXIF (muy importante)
+        const orientation = await leerOrientacionEXIF(file);
+
+        // Redimensionar
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Ajustar canvas según orientación
+        if (orientation === 6 || orientation === 8) {
+          canvas.width = height;
+          canvas.height = width;
+        } else {
+          canvas.width = width;
+          canvas.height = height;
+        }
+
+        // Rotar según EXIF
+        switch (orientation) {
+          case 3:
+            ctx.rotate(Math.PI);
+            ctx.drawImage(img, -width, -height, width, height);
+            break;
+          case 6:
+            ctx.rotate(90 * Math.PI / 180);
+            ctx.drawImage(img, 0, -height, width, height);
+            break;
+          case 8:
+            ctx.rotate(-90 * Math.PI / 180);
+            ctx.drawImage(img, -width, 0, width, height);
+            break;
+          default:
+            ctx.drawImage(img, 0, 0, width, height);
+        }
         const base64 = canvas.toDataURL("image/jpeg", quality);
         resolve(base64);
       } catch (err) {
         reject(err);
       }
     };
-
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error("No se pudo cargar la imagen"));
+      reject("No se pudo cargar la imagen");
     };
-
     img.src = objectUrl;
   });
 }
