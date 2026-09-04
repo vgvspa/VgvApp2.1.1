@@ -5,6 +5,47 @@ console.log("✅ script_v2.js cargado correctamente");
 
 let usuarioActivo = null;
 let fotoBase64 = null;
+let moduloActivo = "entregas";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec";
+const REVIEW_PASS = "1234";
+const REVIEW_USER_ALIASES = ["admin1", "admin 1"];
+
+const FORM_CONFIG = {
+  entregas: {
+    nombreModulo: "Entregas",
+    screen: "screen-entregas",
+    numero: "guia-numero",
+    tipo: "tipoDocumento",
+    datetime: "datetime-auto",
+    preview: "photo-preview",
+    placeholder: "photo-placeholder",
+    camera: "camera-input",
+    retake: "btn-retake",
+    estados: "estado-opciones",
+    estado: "estado",
+    submit: "btn-submit",
+    status: "submit-status"
+  },
+  proveedores: {
+    nombreModulo: "Proveedores / Compras",
+    screen: "screen-proveedores",
+    numero: "compras-numero",
+    tipo: "compras-tipo-documento",
+    datetime: "compras-datetime",
+    preview: "compras-preview",
+    placeholder: "compras-placeholder",
+    camera: "compras-camera",
+    retake: "compras-retake",
+    estados: "compras-estado-opciones",
+    estado: "compras-estado",
+    submit: "compras-submit",
+    status: "compras-status"
+  }
+};
+
+function getFormConfig(modulo = "entregas") {
+  return FORM_CONFIG[modulo] || FORM_CONFIG.entregas;
+}
 // ============================================================
 // LOGIN CON GOOGLE SHEETS
 // ============================================================
@@ -14,9 +55,36 @@ async function doLogin() {
   const pass = document.getElementById("login-pass").value.trim();
   const patente = document.getElementById("patente").value.trim();
   const btn = document.querySelector(".btn-primary");
+  const loginError = document.getElementById("login-error");
+  const normalizedUser = user.toLowerCase();
+  const isReviewUser = REVIEW_USER_ALIASES.includes(normalizedUser);
+  const isLocalReviewHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
-  if (!user || !pass || !patente) {
-    document.getElementById("login-error").classList.remove("hidden");
+  loginError.classList.add("hidden");
+
+  if (!user || !pass) {
+    loginError.classList.remove("hidden");
+    return;
+  }
+
+  if (isReviewUser && pass === REVIEW_PASS) {
+    usuarioActivo = {
+      nombre: "Admin Revision",
+      rol: "Administrador"
+    };
+
+    if (patente) {
+      localStorage.setItem("patente", patente);
+    } else {
+      localStorage.setItem("patente", "REV-00-00");
+    }
+
+    mostrarMenu();
+    return;
+  }
+
+  if (isLocalReviewHost) {
+    alert("Modo revision local: usa usuario admin1 (o admin 1) y clave 1234.");
     return;
   }
  // 🔄 Animación de carga
@@ -25,7 +93,7 @@ async function doLogin() {
     <span class="loader"></span> Espere...
   `; 
 try {
-    const url = "https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec";
+  const url = APPS_SCRIPT_URL;
     const payload = { accion: "login", usuario: user, password: pass };
     const res = await fetch(url, {
       method: "POST",
@@ -38,7 +106,7 @@ try {
       localStorage.setItem("patente", patente);
       mostrarMenu();
     } else {
-      document.getElementById("login-error").classList.remove("hidden");
+      loginError.classList.remove("hidden");
     }
 
   } catch (e) {
@@ -82,11 +150,12 @@ function mostrarMenu() {
 }
 
 function goToModule(mod) {
-  if (mod === "entregas") {
-    resetFormEntregas();
-    showScreen("screen-entregas");
-    activarSeleccionEstado();
-  }
+  if (!FORM_CONFIG[mod]) return;
+
+  moduloActivo = mod;
+  resetFormEntregas(mod);
+  showScreen(getFormConfig(mod).screen);
+  activarSeleccionEstado(mod);
 }
 
 function goBack(destino) {
@@ -101,14 +170,15 @@ function goBack(destino) {
 // ESTADO DE ENTREGA
 // ============================================================
 
-function activarSeleccionEstado() {
-  document.querySelectorAll(".estado-box").forEach(box => {
+function activarSeleccionEstado(modulo = "entregas") {
+  const config = getFormConfig(modulo);
+  document.querySelectorAll(`#${config.estados} .estado-box`).forEach(box => {
     box.onclick = () => {
-      document.querySelectorAll(".estado-box")
+      document.querySelectorAll(`#${config.estados} .estado-box`)
         .forEach(b => b.classList.remove("selected"));
 
       box.classList.add("selected");
-      document.getElementById("estado").value = box.dataset.value;
+      document.getElementById(config.estado).value = box.dataset.value;
     };
   });
 }
@@ -117,59 +187,68 @@ function activarSeleccionEstado() {
 // FORMULARIO ENTREGAS
 // ============================================================
 
-function resetFormEntregas() {
+function resetFormEntregas(modulo = "entregas") {
+  const config = getFormConfig(modulo);
   fotoBase64 = null;
+  moduloActivo = modulo;
 
   // Campos del formulario
-  document.getElementById("guia-numero").value = "";
-  document.getElementById("estado").value = "";
-  document.getElementById("tipoDocumento").value = "";
+  document.getElementById(config.numero).value = "";
+  document.getElementById(config.estado).value = "";
+  document.getElementById(config.tipo).value = "";
 
   // Reset estado visual
-  document.querySelectorAll(".estado-box").forEach(b => b.classList.remove("selected"));
-  document.querySelectorAll(".btn-tipo-doc").forEach(btn => btn.classList.remove("selected"));
+  document.querySelectorAll(`#${config.estados} .estado-box`).forEach(b => b.classList.remove("selected"));
+  document.querySelectorAll(`#${config.screen} .btn-tipo-doc`).forEach(btn => btn.classList.remove("selected"));
 
   // Reset foto
-  document.getElementById("photo-preview").src = "";
-  document.getElementById("photo-preview").classList.add("hidden");
-  document.getElementById("photo-placeholder").style.display = "flex";
-  document.getElementById("btn-retake").style.display = "none";
-  document.getElementById("camera-input").value = "";
+  document.getElementById(config.preview).src = "";
+  document.getElementById(config.preview).classList.add("hidden");
+  document.getElementById(config.placeholder).style.display = "flex";
+  document.getElementById(config.retake).style.display = "none";
+  document.getElementById(config.camera).value = "";
 
   // Reset estado del botón de envío
-  document.getElementById("submit-status").classList.add("hidden");
-  document.getElementById("btn-submit").disabled = false;
+  document.getElementById(config.status).classList.add("hidden");
+  document.getElementById(config.submit).disabled = false;
 
   // Actualizar fecha/hora
-  actualizarDatetime();
+  actualizarDatetime(modulo);
 }
 
-function actualizarDatetime() {
+function actualizarDatetime(modulo = "entregas") {
+  const config = getFormConfig(modulo);
   const ahora = new Date();
   const texto = ahora.toLocaleDateString("es-CL", {
     weekday: "long", day: "numeric", month: "long", year: "numeric"
   }) + " · " + ahora.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
 
-  const el = document.getElementById("datetime-auto");
+  const el = document.getElementById(config.datetime);
   if (el) el.textContent = texto;
 }
 
 setInterval(() => {
-  if (document.getElementById("screen-entregas").classList.contains("active")) {
-    actualizarDatetime();
+  if (document.getElementById(FORM_CONFIG.entregas.screen).classList.contains("active")) {
+    actualizarDatetime("entregas");
+  }
+  if (document.getElementById(FORM_CONFIG.proveedores.screen).classList.contains("active")) {
+    actualizarDatetime("proveedores");
   }
 }, 30000);
 
 // ============================================================
 // FOTO 
 // ============================================================
-function triggerCamera() {
-  const input = document.getElementById("camera-input");
+function triggerCamera(modulo = moduloActivo) {
+  const config = getFormConfig(modulo);
+  const input = document.getElementById(config.camera);
   input.value = ""; // reset obligatorio
   input.click();
 }
 
 async function handlePhoto(event) {
+  const modulo = event.target.dataset.module || moduloActivo;
+  const config = getFormConfig(modulo);
   const file = event.target.files[0];
   if (!file) return;
 
@@ -177,22 +256,23 @@ async function handlePhoto(event) {
   fotoBase64 = await comprimirImagen(file);
 
   // Mostrar preview
-  const preview = document.getElementById("photo-preview");
+  const preview = document.getElementById(config.preview);
   preview.src = fotoBase64;
   preview.classList.remove("hidden");
 
-  document.getElementById("photo-placeholder").style.display = "none";
-  document.getElementById("btn-retake").style.display = "block";
+  document.getElementById(config.placeholder).style.display = "none";
+  document.getElementById(config.retake).style.display = "block";
 }
-function retakePhoto() {
+function retakePhoto(modulo = moduloActivo) {
+  const config = getFormConfig(modulo);
   fotoBase64 = null;
 
-  const preview = document.getElementById("photo-preview");
+  const preview = document.getElementById(config.preview);
   preview.src = "";
   preview.classList.add("hidden");
 
-  document.getElementById("photo-placeholder").style.display = "flex";
-  document.getElementById("btn-retake").style.display = "none";
+  document.getElementById(config.placeholder).style.display = "flex";
+  document.getElementById(config.retake).style.display = "none";
 }
 // ============================================================
 // COMPRESIÓN DE IMAGEN (VERSIÓN SIMPLE Y ESTABLE)
@@ -239,59 +319,21 @@ function comprimirImagen(file, maxWidth = 1024, quality = 0.75) {
 }
 
 // ============================================================
-// FOTO — FLUJO SIMPLE Y ESTABLE
-// ============================================================
-function triggerCamera() {
-  const input = document.getElementById("camera-input");
-  input.value = ""; // reset obligatorio para que dispare onchange
-  input.click();
-}
-
-async function handlePhoto(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  // Comprimir imagen
-  fotoBase64 = await comprimirImagen(file);
-
-  // Mostrar preview
-  const preview = document.getElementById("photo-preview");
-  preview.src = fotoBase64;
-  preview.classList.remove("hidden");
-
-  // Ocultar placeholder
-  document.getElementById("photo-placeholder").style.display = "none";
-
-  // Mostrar botón "Tomar otra foto"
-  document.getElementById("btn-retake").style.display = "block";
-}
-
-function retakePhoto() {
-  fotoBase64 = null;
-
-  const preview = document.getElementById("photo-preview");
-  preview.src = "";
-  preview.classList.add("hidden");
-
-  document.getElementById("photo-placeholder").style.display = "flex";
-  document.getElementById("btn-retake").style.display = "none";
-}
-
-// ============================================================
 // TIPO DE DOCUMENTO
 // ============================================================
 
-function seleccionarTipo(tipo) {
-  document.getElementById("tipoDocumento").value = tipo;
+function seleccionarTipo(tipo, modulo = moduloActivo) {
+  const config = getFormConfig(modulo);
+  document.getElementById(config.tipo).value = tipo;
 
-  document.querySelectorAll(".btn-tipo-doc").forEach(btn => {
+  document.querySelectorAll(`#${config.screen} .btn-tipo-doc`).forEach(btn => {
     btn.classList.remove("selected");
   });
 
   if (tipo === "guia") {
-    document.querySelector(".btn-tipo-doc.guia").classList.add("selected");
+    document.querySelector(`#${config.screen} .btn-tipo-doc.guia`).classList.add("selected");
   } else {
-    document.querySelector(".btn-tipo-doc.factura").classList.add("selected");
+    document.querySelector(`#${config.screen} .btn-tipo-doc.factura`).classList.add("selected");
   }
 }
 
@@ -299,16 +341,18 @@ function seleccionarTipo(tipo) {
 // ENVÍO DE ENTREGA
 // ============================================================
 
-async function submitEntrega() {
-  const guia = document.getElementById("guia-numero").value.trim();
-  const estado = document.getElementById("estado").value;
-  const tipoDocumento = document.getElementById("tipoDocumento").value;
+async function submitEntrega(modulo = moduloActivo) {
+  const config = getFormConfig(modulo);
+  const numero = document.getElementById(config.numero).value.trim();
+  const estado = document.getElementById(config.estado).value;
+  const tipoDocumento = document.getElementById(config.tipo).value;
+  const moduloOrigen = config.nombreModulo;
 
   if (!tipoDocumento) {
     alert("Selecciona si es guía o factura.");
     return;
   }
-  if (!guia) {
+  if (!numero) {
     alert("Ingresa el número de documento.");
     return;
   }
@@ -323,9 +367,11 @@ async function submitEntrega() {
 
   const payload = {
   accion: "registrarEntrega",
-  numero: guia, // 
+  numero,
   estado,
   tipoDocumento,
+  modulo: modulo === "proveedores" ? "proveedores_compras" : "entregas",
+  moduloOrigen,
   usuario: usuarioActivo.nombre,
   rol: usuarioActivo.rol,
   fecha: new Date().toLocaleDateString("es-CL"),
@@ -334,8 +380,8 @@ async function submitEntrega() {
   patente: localStorage.getItem("patente")
 };
 
-  const btn = document.getElementById("btn-submit");
-  const status = document.getElementById("submit-status");
+  const btn = document.getElementById(config.submit);
+  const status = document.getElementById(config.status);
 
   btn.disabled = true;
   btn.textContent = "Enviando...";
@@ -343,14 +389,14 @@ async function submitEntrega() {
   status.classList.remove("hidden");
 
   try {
-const res = await fetch("https://script.google.com/macros/s/AKfycbzP04DM6clsY4oUASPu3HDRLdFlsjk4EwORNVcYMlC4hNPaPr2W4KsUGNOoecXJIUCr/exec", {
+const res = await fetch(APPS_SCRIPT_URL, {
   method: "POST",
   body: new URLSearchParams({ data: JSON.stringify(payload) })
 });
     const data = await res.json();
 
     if (data.ok) {
-      document.getElementById("exito-guia").textContent = guia;
+      document.getElementById("exito-guia").textContent = numero;
       showScreen("screen-exito");
     } else {
       alert("Error al guardar: " + data.error);
@@ -364,8 +410,8 @@ const res = await fetch("https://script.google.com/macros/s/AKfycbzP04DM6clsY4oU
   btn.textContent = "Registrar entrega";
 }
 function nuevaEntrega() {
-  resetFormEntregas();
-  showScreen("screen-entregas");
+  resetFormEntregas(moduloActivo);
+  showScreen(getFormConfig(moduloActivo).screen);
 }
 function doLogout() {
   // Limpia datos del usuario
