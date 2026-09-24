@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./style.css?v=20260904">
   <link rel="manifest" href="./manifest.json">
 
-  <script>
+  <script> 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./service-worker-v4.js", {
         scope: "./"
@@ -40,7 +40,9 @@
           <label class="form-label">Usuario</label>
           <div class="input-wrap">
             <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-            <input type="text" id="login-user" placeholder="nombre.apellido" autocomplete="username" />
+            <select id="login-user" autocomplete="username">
+              <option value="">Cargando usuarios...</option>
+            </select>
           </div>
         </div>
         <div class="form-group">
@@ -54,7 +56,9 @@
           <label class="form-label" for="patente">Patente</label>
           <div class="input-wrap">
             <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v10H3z"/><path d="M7 10h6M7 14h10"/></svg>
-            <input type="text" id="patente" placeholder="Ej: KT-XX-45" autocomplete="off" required />
+            <select id="patente" autocomplete="off" required>
+              <option value="">Cargando patentes...</option>
+            </select>
           </div>
         </div>
         <div id="login-error" class="login-error hidden">Usuario o contraseña incorrectos</div>
@@ -87,10 +91,12 @@
         <div class="user-date" id="menu-fecha"></div>
       </div>
 
+      <div id="menu-rutas-compras" class="menu-rutas-compras hidden"></div>
+
       <div class="section-title">Módulos disponibles</div>
 
       <div class="modules-grid">
-        <button class="module-card active-module" onclick="goToModule('entregas')" style="position:relative;">
+        <button class="module-card active-module" data-module="entregas" onclick="goToModule('entregas')" style="position:relative;">
           <div class="module-icon" style="background: #1A4B8C15; color: #1A4B8C;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           </div>
@@ -100,12 +106,21 @@
           <span id="badge-pendientes" class="hidden" style="position:absolute;top:8px;right:8px;background:#c0392b;color:white;border-radius:999px;font-size:11px;font-weight:600;padding:2px 7px;min-width:20px;text-align:center;"></span>
         </button>
 
-        <button class="module-card active-module" onclick="goToModule('proveedores')" style="position:relative;">
+        <button class="module-card active-module hidden" data-module="proveedores" onclick="goToModule('proveedores')" style="position:relative;">
           <div class="module-icon" style="background: #1a8c5a15; color: #1a8c5a;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18"/><path d="M5 21V5l7-3 7 3v16"/><path d="M9 21v-5h6v5"/><path d="M8 8h1M15 8h1M8 11h1M15 11h1"/></svg>
           </div>
           <div class="module-name">Proveedores / Compras</div>
           <div class="module-desc">Registro de compras</div>
+          <div class="module-badge active-badge">Activo</div>
+        </button>
+
+        <button class="module-card active-module" onclick="goToModule('revision')" style="position:relative;">
+          <div class="module-icon" style="background: #c0392b15; color: #c0392b;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="2" width="18" height="20" rx="2"/><path d="M8 2v3h8V2"/><path d="M9 11l2 2 4-4"/><path d="M8 16h8"/></svg>
+          </div>
+          <div class="module-name">Revisión previa de ruta</div>
+          <div class="module-desc">Checklist de camión</div>
           <div class="module-badge active-badge">Activo</div>
         </button>
       </div>
@@ -142,9 +157,9 @@
 </div>
  
 
-      <!-- Número de guía -->
+      <!-- Número de documento -->
       <div class="field-section">
-        <label class="form-label">N° Guía de despacho</label>
+        <label class="form-label">Número de documento</label>
         <div class="input-wrap">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           <input type="text" id="guia-numero" placeholder="Ej: GD-2025-0042" />
@@ -276,6 +291,100 @@
       <div id="compras-status" class="submit-status hidden"></div>
     </div>
   </div>
+  <!-- ===================== PANTALLA: REVISIÓN PREVIA DE RUTA ===================== -->
+  <div id="screen-revision" class="screen">
+    <div class="app-header">
+      <button class="btn-back" onclick="goBack('menu')" title="Volver">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="header-center">
+        <div class="header-logo">Revisión previa de ruta</div>
+        <div class="header-sub">Checklist de inspección del camión</div>
+      </div>
+      <div style="width:36px"></div>
+    </div>
+
+    <div class="app-body" id="revision-form-body">
+
+      <div class="revision-asignacion">
+        <div class="asignacion-item">
+          <span class="asignacion-label">Chofer</span>
+          <span class="asignacion-valor" id="revision-chofer">—</span>
+        </div>
+        <div class="asignacion-item">
+          <span class="asignacion-label">Patente</span>
+          <span class="asignacion-valor" id="revision-patente">—</span>
+        </div>
+      </div>
+
+      <div class="field-section">
+        <label class="form-label">Fecha y hora del registro</label>
+        <div class="datetime-display">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="revision-datetime"></span>
+        </div>
+      </div>
+
+      <div class="field-section">
+        <label class="form-label">Odómetro</label>
+        <div class="input-wrap">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17V7l9-4 9 4v10l-9 4-9-4z"/><path d="M7 10h10M7 14h6"/></svg>
+          <input type="number" id="revision-odometro" min="0" step="1" placeholder="Ej: 123456" />
+        </div>
+      </div>
+
+      <div class="revision-progreso">
+        <div class="revision-progreso-barra"><div id="revision-progreso-fill" class="revision-progreso-fill"></div></div>
+        <span id="revision-progreso-texto">0 / 0 completados</span>
+      </div>
+
+      <div id="revision-checklist"></div>
+
+      <div class="field-section">
+        <label class="form-label">Detalle</label>
+        <textarea id="revision-observaciones" class="revision-textarea" placeholder="Detalla cualquier falla, novedad o comentario de la revisión..."></textarea>
+      </div>
+
+      <!-- Foto del tablero -->
+      <div class="field-section">
+        <label class="form-label">Foto del tablero</label>
+
+        <div class="photo-area" onclick="triggerCamera('revision')">
+          <img id="revision-preview" class="photo-preview hidden" alt="Vista previa" />
+          <div id="revision-placeholder" class="photo-placeholder">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            <span>Tomar foto del tablero</span>
+          </div>
+        </div>
+
+        <input
+          type="file"
+          id="revision-camera"
+          data-module="revision"
+          accept="image/*"
+          capture="environment"
+          class="hidden"
+          onchange="handlePhoto(event)"
+        />
+
+        <button class="btn-secondary" id="revision-retake" onclick="retakePhoto('revision')" style="display:none; margin-top:6px;">
+          Tomar otra foto
+        </button>
+      </div>
+
+      <button class="btn-primary btn-submit" id="revision-submit" onclick="submitRevision()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Registrar revisión
+      </button>
+
+      <div id="revision-status" class="submit-status hidden"></div>
+
+    </div>
+  </div>
+
   <!-- ===================== PANTALLA: ÉXITO ===================== -->
   <div id="screen-exito" class="screen">
     <div class="exito-wrap">
